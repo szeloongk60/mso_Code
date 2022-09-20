@@ -18,3 +18,4 @@ vs:vs2003
 所以，這源碼需要會C++語言弄的。
 
 這個版本就開放給大家，下個版本，我計劃好了，只是還沒去寫。在研究其他東西。會比這版本更精彩。
+客服端:https://drive.google.com/file/d/1Ki8Xb2Y8VgRM-gSlIXnusGWLN9Gsym8P/view?usp=sharing
