@@ -20,7 +20,12 @@ vs:vs2003
 這個版本就開放給大家，下個版本，我計劃好了，只是還沒去寫。在研究其他東西。會比這版本更精彩。
 
 客服端:https://drive.google.com/file/d/1Ki8Xb2Y8VgRM-gSlIXnusGWLN9Gsym8P/view?usp=sharing
+——————————————————————————————————————————————————————————————————————————————————————————————
 
 最新的源码：https://mega.nz/file/cYYGlKTK#0ZNCOlKuWT5aKqIhXDcYj5fT8uvK8HVYHBKCve8cf58
 感觉没有什么动力做下去了，开源给会的人去搞吧。我应该不会再开墨香了。
 真的累了，不想再去理什么人情世故。
+
+
+最新客服端： https://mega.nz/file/5dAWkLTT#c8CDQpeMa6M6UL1JiozEKXw-zT6XWLi5fkGJbev2iyo
+
