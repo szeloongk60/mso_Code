@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神物箱子训练模拟</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #090b0f;
+            color: #eef3f7;
+            font-family: "Microsoft JhengHei", "PingFang TC", "Inter", sans-serif;
+            overflow: hidden;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'%3E%3Cpath d='M3 2 L24 14 L14 17 L18 28 L12 30 L8 19 L2 23 Z' fill='%23f5b841' stroke='%236e3b08' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M6 6 L19 13.5 L12 15.5 L15 24' fill='none' stroke='%23ffe78a' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") 2 2, auto;
+        }
+
+        /* 精简计次与重置条 */
+        #hud-strip {
+            position: fixed;
+            top: 10px;
+            right: 12px;
+            z-index: 40;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: rgba(14, 18, 24, 0.88);
+            border: 1px solid rgba(110, 134, 158, 0.34);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            font-size: 12px;
+            line-height: 1.2;
+        }
+
+        .hud-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #d7e2ec;
+            white-space: nowrap;
+        }
+
+        .hud-item strong {
+            color: #ffd859;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .hud-divider {
+            width: 1px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        .hud-btn {
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(135, 162, 188, 0.36);
+            background: rgba(38, 48, 60, 0.85);
+            color: #eff5fa;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.08s ease, transform 0.06s ease;
+        }
+
+        .hud-btn:hover {
+            background: rgba(62, 78, 96, 0.95);
+        }
+
+        .hud-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 纯净深色底画布 */
+        #stage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #090b0f;
+            overflow: hidden;
+        }
+
+        /* 竖长半透明《神物箱子》对话框（330px × 515px） */
+        #dialog-window {
+            position: absolute;
+            left: 24px;
+            top: 24px;
+            width: 330px;
+            height: 515px;
+            max-width: calc(100vw - 16px);
+            max-height: calc(100vh - 16px);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            background: rgba(16, 22, 30, 0.82);
+            border: 1px solid rgba(118, 144, 172, 0.45);
+            border-radius: 2px;
+            box-shadow:
+                inset 0 0 0 1px rgba(18, 24, 32, 0.85),
+                0 14px 32px rgba(0, 0, 0, 0.72);
+            overflow: hidden;
+        }
+
+        /* 标题栏 */
+        #dialog-header {
+            position: relative;
+            height: 28px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6px 0 10px;
+            background: linear-gradient(180deg, #47596d 0%, #27323e 56%, #182028 100%);
+            border-bottom: 1px solid rgba(12, 16, 22, 0.9);
+            box-shadow: inset 0 1px 0 rgba(170, 196, 222, 0.32);
+        }
+
+        #dialog-title {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            color: #eff4f9;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.9);
+        }
+
+        #dialog-close-btn {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 3px;
+            color: #d8e4f0;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1;
+            transition: background 0.08s ease, color 0.08s ease, border-color 0.08s ease, transform 0.06s ease;
+        }
+
+        #dialog-close-btn:hover,
+        #dialog-close-btn:active {
+            background: rgba(220, 48, 48, 0.92);
+            border-color: rgba(255, 130, 130, 0.75);
+            color: #ffffff;
+        }
+
+        #dialog-close-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* 弹窗文本与可点击选项 */
+        #dialog-body {
+            position: relative;
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.5;
+            color: #f1f5f9;
+            text-shadow:
+                1px 1px 1px rgba(8, 12, 16, 0.95),
+                0 0 3px rgba(0, 0, 0, 0.85);
+        }
+
+        .dialog-pos-text {
+            position: absolute;
+            left: 18px;
+            right: 18px;
+            top: 14px;
+        }
+
+        .dialog-pos-catalog-header {
+            position: absolute;
+            left: 18px;
+            top: 14px;
+            color: #f1f5f9;
+        }
+
+        .dialog-pos-active-label {
+            position: absolute;
+            left: 18px;
+            top: 42px;
+            color: #e2e8f0;
+        }
+
+        .action-link {
+            position: absolute;
+            display: inline-block;
+            font-size: 15px;
+            line-height: 1.4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: color 0.08s ease, background 0.08s ease, text-decoration-color 0.08s ease, transform 0.06s ease;
+        }
+
+        .action-link.pos-step1 {
+            left: 22px;
+            top: 115px;
+        }
+
+        .action-link.pos-step2 {
+            left: 22px;
+            top: 72px;
+        }
+
+        .action-link.pos-step3 {
+            left: 22px;
+            top: 102px;
+        }
+
+        .action-link.white-underline {
+            color: #f4f7fa;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .action-link.green-link {
+            color: #76dc76;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .action-link:hover {
+            color: #ffe64d;
+            text-decoration-color: #ffe64d;
+            background: rgba(255, 230, 77, 0.14);
+        }
+
+        .action-link:active {
+            color: #fff28a;
+            text-decoration-color: #fff28a;
+            background: rgba(255, 230, 77, 0.24);
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 640px) {
+            #hud-strip {
+                top: auto;
+                bottom: 10px;
+                right: 10px;
+                gap: 6px;
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+
+            #dialog-window {
+                left: 8px;
+                top: 8px;
+                width: 330px;
+                height: 515px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 右上角精简计次与重置 -->
+    <div id="hud-strip" role="region" aria-label="完成计数">
+        <div class="hud-item">完成: <strong id="hud-count">0</strong></div>
+        <div class="hud-divider"></div>
+        <button id="reset-btn" class="hud-btn" type="button" title="重置计数 (快捷键 R)">重置 [R]</button>
+    </div>
+
+    <!-- 纯净深色背景画布 -->
+    <main id="stage">
+        <!-- 竖长半透明《神物箱子》对话框 -->
+        <section id="dialog-window" aria-label="神物箱子">
+            <div id="dialog-header">
+                <span id="dialog-title">神物箱子</span>
+                <button id="dialog-close-btn" type="button" aria-label="关闭神物箱子">✕</button>
+            </div>
+            <div id="dialog-body"></div>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            'use strict';
+
+            let currentStep = 1;
+            let completedCount = 0;
+
+            const dialogWindow = document.getElementById('dialog-window');
+            const dialogBody = document.getElementById('dialog-body');
+            const dialogCloseBtn = document.getElementById('dialog-close-btn');
+            const hudCountEl = document.getElementById('hud-count');
+            const resetBtn = document.getElementById('reset-btn');
+
+            // 渲染第 1 ~ 4 步文字与可点击选项
+            function renderStep() {
+                dialogWindow.style.display = 'flex';
+
+                if (currentStep === 1) {
+                    dialogBody.innerHTML = `
+                        <div class="dialog-pos-text">利用鑰匙打開箱子後發現，裡面有甚麼東西在發光。</div>
+                        <span id="step1-target" class="action-link pos-step1 white-underline" role="button" tabindex="0">任务目录</span>
+                    `;
+                    document.getElementById('step1-target').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        currentStep = 2;
+                        renderStep();
+                    });
+                } else if (currentStep === 2) {
+                    dialogBody.innerHTML = `
+                        <div class="dialog-pos-catalog-header">[任務目錄]</div>
+                        <div class="dialog-pos-active-label">進行中的任務</div>
+                        <span id="step2-target" class="action-link pos-step2 green-link" role="button" tabindex="0">[干怪 Lv. 30]合葬的願望</span>
+                    `;
+                    document.getElementById('step2-target').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        currentStep = 3;
+                        renderStep();
+                    });
+                } else if (currentStep === 3) {
+                    dialogBody.innerHTML = `
+                        <div class="dialog-pos-text">可以隱隱約約感受到箱子內發出的光芒到底是甚麼。</div>
+                        <span id="step3-target" class="action-link pos-step3 green-link" role="button" tabindex="0">查看箱子</span>
+                    `;
+                    document.getElementById('step3-target').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        currentStep = 4;
+                        renderStep();
+                    });
+                } else if (currentStep === 4) {
+                    dialogBody.innerHTML = `
+                        <div class="dialog-pos-text">從箱子裡面得到了珍貴的寵物。</div>
+                    `;
+                }
+            }
+
+            // 点击右上角 X：完成次数 +1 并立即回到第 1 步
+            dialogCloseBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                completedCount += 1;
+                hudCountEl.textContent = String(completedCount);
+                currentStep = 1;
+                renderStep();
+            });
+
+            // 重置完成次数并回到第 1 步
+            function resetCounter(e) {
+                if (e) e.stopPropagation();
+                completedCount = 0;
+                currentStep = 1;
+                hudCountEl.textContent = '0';
+                renderStep();
+            }
+
+            resetBtn.addEventListener('click', resetCounter);
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'r' || e.key === 'R') {
+                    e.preventDefault();
+                    resetCounter(null);
+                }
+            });
+
+            renderStep();
+        })();
+    </script>
+</body>
+</html>
